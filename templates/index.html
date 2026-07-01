@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Travel Reimbursement Approval Agent — Upload claims and receipts for AI-powered policy compliance review">
+    <title>Travel Reimbursement Agent — Upload</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        /* Loading State Styles */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:disabled {
+            background-color: #4a5568 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .submitting .spinner {
+            display: inline-block;
+        }
+
+        .submitting .btn-text {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a href="/" class="logo">
+                <span class="logo-icon">📋</span>
+                <h1>Travel Reimbursement Agent</h1>
+                <span class="tag">GenAI</span>
+            </a>
+            <nav>
+                <a href="/">Upload</a>
+                <a href="/results">Results</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endwith %}
+
+            <div class="status-bar">
+                {% if ollama_status.available %}
+                <span class="status-dot online"></span>
+                <span>Ollama connected — model <strong>{{ ollama_status.models|join(', ') }}</strong> ready</span>
+                {% else %}
+                <span class="status-dot offline"></span>
+                <span>Ollama offline — {{ ollama_status.error or 'Cannot reach Ollama server' }}. Claims will be routed
+                    to Manual Review.</span>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Upload Claims & Receipts</h2>
+                    <p>Upload your Excel claims file and any supporting PDF receipts. The agent will review each claim
+                        against company travel policy.</p>
+                </div>
+
+                <form id="uploadForm" action="/run" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="claims_file">Claims File (Excel)</label>
+                        <input type="file" id="claims_file" name="claims_file" accept=".xlsx,.xls" required>
+                        <p class="hint">Expected columns: claim_id, employee_id, category, amount, currency, date, city,
+                            description</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="receipt_files">Receipt PDFs (optional)</label>
+                        <input type="file" id="receipt_files" name="receipt_files" accept=".pdf" multiple>
+                        <p class="hint">Upload one or more PDF receipts. Name files to include the claim_id (e.g.,
+                            CLM001_hotel_receipt.pdf) for automatic matching.</p>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-primary">
+                        <span class="spinner"></span>
+                        <span class="btn-text">🚀 Run Agent</span>
+                        <span class="loading-text" style="display: none;">⚙️ Processing Claims...</span>
+                    </button>
+                </form>
+            </div>
+
+
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            const form = this;
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loadingText = submitBtn.querySelector('.loading-text');
+
+            // Add loading class to trigger spinner display via CSS
+            submitBtn.classList.add('submitting');
+
+            // Toggle text views
+            btnText.style.display = 'none';
+            loadingText.style.display = 'inline-block';
+
+            // Disable button to prevent double form submission
+            submitBtn.disabled = true;
+
+            // Short timeout to ensure the UI updates before browser blocks threads for file upload
+            setTimeout(() => {
+                form.submit();
+            }, 50);
+        });
+    </script>
+</body>
+
+</html>

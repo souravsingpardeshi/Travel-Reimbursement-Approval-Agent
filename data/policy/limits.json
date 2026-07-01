@@ -1,0 +1,127 @@
+{
+  "currency_defaults": {
+    "domestic": "INR",
+    "international": "USD"
+  },
+  "receipt_required_above": {
+    "INR": 500,
+    "USD": 10
+  },
+  "pre_approval_required_above": {
+    "INR": 20000,
+    "USD": 500
+  },
+  "submission_deadline_days": 30,
+  "late_submission_max_days": 90,
+  "manual_review_excess_percent": 150,
+  "categories": {
+    "airfare": {
+      "domestic": {
+        "daily_limit": null,
+        "trip_limit": 15000,
+        "currency": "INR",
+        "requires_receipt_above": 500,
+        "notes": "Economy class only"
+      },
+      "international": {
+        "daily_limit": null,
+        "trip_limit": 1500,
+        "currency": "USD",
+        "requires_receipt_above": 10,
+        "notes": "Economy or premium-economy"
+      }
+    },
+    "hotel": {
+      "domestic": {
+        "daily_limit": 5000,
+        "trip_limit": 25000,
+        "currency": "INR",
+        "requires_receipt_above": 500,
+        "notes": "Per night; max 5 nights per trip"
+      },
+      "international": {
+        "daily_limit": 200,
+        "trip_limit": 1400,
+        "currency": "USD",
+        "requires_receipt_above": 10,
+        "notes": "Per night; max 7 nights per trip"
+      }
+    },
+    "meals": {
+      "domestic": {
+        "daily_limit": 1500,
+        "trip_limit": 7500,
+        "currency": "INR",
+        "requires_receipt_above": 500,
+        "notes": "Breakfast, lunch, dinner combined. Alcohol not reimbursable."
+      },
+      "international": {
+        "daily_limit": 75,
+        "trip_limit": 525,
+        "currency": "USD",
+        "requires_receipt_above": 10,
+        "notes": "Reasonable dining. Alcohol not reimbursable."
+      }
+    },
+    "local_transport": {
+      "domestic": {
+        "daily_limit": 1500,
+        "trip_limit": 7500,
+        "currency": "INR",
+        "requires_receipt_above": 500,
+        "notes": "Includes airport transfers"
+      },
+      "international": {
+        "daily_limit": 60,
+        "trip_limit": 420,
+        "currency": "USD",
+        "requires_receipt_above": 10,
+        "notes": "Includes airport transfers"
+      }
+    },
+    "per_diem": {
+      "domestic": {
+        "daily_limit": 500,
+        "trip_limit": 2500,
+        "currency": "INR",
+        "requires_receipt_above": 500,
+        "notes": "Flat daily allowance"
+      },
+      "international": {
+        "daily_limit": 30,
+        "trip_limit": 210,
+        "currency": "USD",
+        "requires_receipt_above": 10,
+        "notes": "Flat daily allowance"
+      }
+    },
+    "miscellaneous": {
+      "domestic": {
+        "daily_limit": 1000,
+        "trip_limit": 5000,
+        "currency": "INR",
+        "requires_receipt_above": 500,
+        "notes": "Requires itemization"
+      },
+      "international": {
+        "daily_limit": 50,
+        "trip_limit": 350,
+        "currency": "USD",
+        "requires_receipt_above": 10,
+        "notes": "Requires itemization"
+      }
+    }
+  },
+  "category_aliases": {
+    "cab": "local_transport",
+    "taxi": "local_transport",
+    "transport": "local_transport",
+    "flight": "airfare",
+    "accommodation": "hotel",
+    "lodging": "hotel",
+    "food": "meals",
+    "dining": "meals",
+    "misc": "miscellaneous",
+    "other": "miscellaneous"
+  }
+}

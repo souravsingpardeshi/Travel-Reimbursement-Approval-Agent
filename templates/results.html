@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Travel Reimbursement Agent — Review AI-powered decisions on travel expense claims">
+    <title>Travel Reimbursement Agent — Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="/" class="logo">
+                <span class="logo-icon">📋</span>
+                <h1>Travel Reimbursement Agent</h1>
+                <span class="tag">GenAI</span>
+            </a>
+            <nav>
+                <a href="/">Upload</a>
+                <a href="/results">Results</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            {% if results %}
+                <!-- Run Metadata -->
+                {% if meta %}
+                <div class="meta-bar">
+                    <span>📁 {{ meta.claims_file }}</span>
+                    <span>📊 {{ meta.total_claims }} claims</span>
+                    <span>🧾 {{ meta.receipts_uploaded }} receipts</span>
+                    <span>⏱️ {{ meta.processing_time_seconds }}s</span>
+                    <span>🕐 {{ meta.timestamp }}</span>
+                </div>
+                {% endif %}
+
+                <!-- Summary Cards -->
+                <div class="summary-grid">
+                    <div class="summary-card approve">
+                        <div class="number">{{ summary.get('Approve', 0) }}</div>
+                        <div class="label">Approved</div>
+                    </div>
+                    <div class="summary-card partial">
+                        <div class="number">{{ summary.get('Partially Approve', 0) }}</div>
+                        <div class="label">Partial</div>
+                    </div>
+                    <div class="summary-card reject">
+                        <div class="number">{{ summary.get('Reject', 0) }}</div>
+                        <div class="label">Rejected</div>
+                    </div>
+                    <div class="summary-card manual">
+                        <div class="number">{{ summary.get('Manual Review', 0) }}</div>
+                        <div class="label">Manual Review</div>
+                    </div>
+                    <div class="summary-card total">
+                        <div class="number">{{ "%.0f"|format(total_approved) }}</div>
+                        <div class="label">Total Approved</div>
+                    </div>
+                    <div class="summary-card total">
+                        <div class="number">{{ "%.0f"|format(total_claimed) }}</div>
+                        <div class="label">Total Claimed</div>
+                    </div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <table class="results-table" id="results-table">
+                        <thead>
+                            <tr>
+                                <th>Claim ID</th>
+                                <th>Decision</th>
+                                <th>Claimed</th>
+                                <th>Approved</th>
+                                <th>Confidence</th>
+                                <th>Explanation</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in results %}
+                            {% set decision_class = {
+                                'Approve': 'approve',
+                                'Partially Approve': 'partial',
+                                'Reject': 'reject',
+                                'Manual Review': 'manual'
+                            }.get(r.decision, 'manual') %}
+                            <tr id="row-{{ r.claim_id }}">
+                                <td><strong>{{ r.claim_id }}</strong></td>
+                                <td>
+                                    <span class="badge {{ decision_class }}">{{ r.decision }}</span>
+                                </td>
+                                <td class="amount">{{ "%.2f"|format(r.claimed_amount|float) }}</td>
+                                <td>
+                                    <span class="amount">{{ "%.2f"|format(r.approved_amount|float) }}</span>
+                                    {% if r.deducted_amount|float > 0 %}
+                                    <br><span class="amount deducted">-{{ "%.2f"|format(r.deducted_amount|float) }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ "%.0f"|format(r.confidence|float * 100) }}%
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: {{ (r.confidence|float * 100)|int }}%;
+                                            background: {% if r.confidence|float >= 0.8 %}var(--green){% elif r.confidence|float >= 0.5 %}var(--yellow){% else %}var(--red){% endif %};"></div>
+                                    </div>
+                                </td>
+                                <td style="max-width: 280px; font-size: 0.78rem; color: var(--text-secondary);">
+                                    {{ r.explanation|truncate(120) if r.explanation else '—' }}
+                                </td>
+                                <td>
+                                    <button class="toggle-btn" onclick="toggleDetail('{{ r.claim_id }}')">
+                                        Details ▾
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="detail-row" id="detail-{{ r.claim_id }}" style="display: none;">
+                                <td colspan="7">
+                                    <div class="detail-content">
+                                        <h4>Full Explanation</h4>
+                                        <p>{{ r.explanation or '—' }}</p>
+
+                                        {% if r.missing_documents %}
+                                        <h4>Missing Documents</h4>
+                                        <ul>
+                                            {% for doc in r.missing_documents %}
+                                            <li>{{ doc }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
+
+                                        {% if r.receipt_files %}
+                                        <h4>Receipts Considered</h4>
+                                        <ul>
+                                            {% for receipt in r.receipt_files %}
+                                            <li>{{ receipt }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
+
+                                        {% if r.policy_reference %}
+                                        <h4>Policy References</h4>
+                                        <ul>
+                                            {% for ref in r.policy_reference %}
+                                            <li>{{ ref }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
+
+                                        {% if r.tools_used %}
+                                        <h4>Tools Used</h4>
+                                        <ul>
+                                            {% for tool in r.tools_used %}
+                                            <li>{{ tool }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
+
+                                        <h4>Raw Decision JSON</h4>
+                                        <pre>{{ r|tojson(indent=2) }}</pre>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="text-align: center; margin-top: 24px;">
+                    <a href="/" class="btn btn-secondary">← Upload New Claims</a>
+                </div>
+
+            {% else %}
+                <!-- Empty State -->
+                <div class="card">
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>No results yet. Upload claims and run the agent to see decisions here.</p>
+                        <a href="/" class="btn btn-primary">Upload Claims</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        function toggleDetail(claimId) {
+            const detailRow = document.getElementById('detail-' + claimId);
+            const btn = document.querySelector('#row-' + claimId + ' .toggle-btn');
+            if (detailRow.style.display === 'none') {
+                detailRow.style.display = 'table-row';
+                btn.textContent = 'Details ▴';
+            } else {
+                detailRow.style.display = 'none';
+                btn.textContent = 'Details ▾';
+            }
+        }
+    </script>
+</body>
+</html>
